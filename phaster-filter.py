@@ -7,10 +7,8 @@
 ##### App: Intact filter from PHASTER.CA files      #####
 #########################################################
 
-from os import path
 import os
 import argparse
-import os.path
 
 
 ####### Command line arguments.
