@@ -2,8 +2,8 @@
 
 #########################################################
 ##### Author: Renato Moreira Neto                   #####
-##### Date: 03/06/2020                              #####
-##### Version: 0.01                                 #####
+##### Date: 03/10/2020                              #####
+##### Version: 0.02                                 #####
 ##### App: Intact filter from PHASTER.CA files      #####
 #########################################################
 
@@ -13,76 +13,74 @@ import argparse
 import os.path
 
 
-# Command line arguments.
-
-desc = "Intact region filter from PHASTER.CA files"
+####### Command line arguments.
+desc = 'Intact region filter from PHASTER.CA files'
 parser = argparse.ArgumentParser(description=desc)
-parser.add_argument("-s", "--summary", default="summary.txt", help="Summary file from PHASTER.CA 'default=summary.txt'")
-parser.add_argument("-r", "--regions", default="phage_regions.fna", help="Phage_regions file from PHASTER.CA 'default=phage_regions.fna'")
-parser.add_argument("-o", "--output",default="kesita_vagabunda.txt", help="Output file with results from regions intacts 'default=kesita_vagabunda.txt'")
+parser.add_argument('-s', '--summary', default='summary.txt', help='Summary file from PHASTER.CA "default=summary.txt"')
+parser.add_argument('-r', '--regions', default='phage_regions.fna', help='Phage_regions file from PHASTER.CA "default=phage_regions.fna"')
+parser.add_argument('-o', '--output', default='kesita_vagabunda.txt', help='Output file with results from regions intacts "default=kesita_vagabunda.txt"')
   
 args = parser.parse_args()
 
 
 ####### Check if output file exists.
-
 if os.path.isfile(args.output):
-    print ("File already exists. Exiting!")
+    print ('Output file already exists. Exiting!')
     exit(1)
     
 
 ####### Identify intact regions from file summary.txt
-
 ids = []
 string_to_search = 'intact('
 list_of_results = []
-# Open the file in read only mode
-with open(args.summary, 'r') as read_file:
-        # Read all lines in the file one by one
-        for line in read_file:
-            # For each line, check if line contains the string
+####### Open the summary file in read only mode.
+with open(args.summary, 'r') as readFileId:
+        # Read all lines in the file one by one.
+        for line in readFileId:
+            # For each line, check if line contains the string.
             if string_to_search in line:
-                # If yes, then store the ID
-                list_of_results.append(line.split( )[0] + ' --> ' + line.split( )[4])
+                # If yes, then store the ID.
                 ids.append(line.split( )[0])
                
  
 ####### Print IDs found.
-print ("IDs found to collect")
-print (ids)
+print ('Regions ID found to collect:', ids)
 
 
-####### Search IDs in the regions file phage_regions.fna
+####### Parse regions function.
+def parse_region(s):
+    tmp = s.lstrip('\n').rstrip().split('\n', 2)
+    header = tmp[0].split('\t')
+    body = '\n'.join(tmp[2:])
+    return {
+        'id': header[0].lstrip('>'),
+        'position': header[1],
+        'sequence': body
+    }
 
+
+####### Open .fna file in read only mode.
 list_of_sequence = []
-dna = []
-collect = False
-# Open the file in read only mode
-with open(args.regions, 'r') as read_dna:
-    # Search for ids in this file
-    for i in ids:
-        # Look this file from the start
-        read_dna.seek(0)
-        dna = (">" + i)
-        # Read all lines in the file one by one
-        for line in read_dna:
-            # If it's an empty line, do nothing.(Used to collect all other lines besides the first)
-            if line == '\n':
-                collect = False
-            # If ID found, start collect regions
-            if dna in line:
-                list_of_sequence.append( "\n\n\nRegion " + dna + "\n")
-                collect = True
-            # Collect entire sequence
-            if collect == True:
-                list_of_sequence.append(line.rstrip('/n'))                    
+with open(args.regions, 'r') as readFileRegions:
+    ####### Map informations from file.
+    seq = map(parse_region, readFileRegions.read().strip().split('\n\n'))
+    for i in seq:
+        ####### Find IDs from summary in .fna file.
+        if i['id'] in ids:
+            list_of_sequence.append('\n\nRegion: ')
+            list_of_sequence.append(i['id'])
+            list_of_sequence.append('\nPosition:')
+            list_of_sequence.append(i['position'])
+            list_of_sequence.append('\n\n')
+            list_of_sequence.append(i['sequence'])
+            list_of_sequence.append('\n------------------------------------------------------')
 
-                    
-###### Export to file.
+                             
+###### Export results to file.
+with open(args.output, 'w+') as fResult:
+    fResult.write('Regions position by ID')
+    fResult.write(''.join(list_of_results))
+    fResult.write('\n\nList of regions: ')
+    fResult.write(''.join(list_of_sequence))
 
-f=open(args.output, "w+")
-f.write("List of regions: ")
-f.write("".join(list_of_sequence))
-f.close()
-print("Done! Your file is ready.")
-            
+print('Done! Your file "'+args.output+'" is ready.')
