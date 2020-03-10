@@ -1,5 +1,12 @@
 Phaster filter
 
+
+Extract your result file from phaster.ca in same directory of this application.
+Then, run application.
+Your result file will be saved in same directory by default.
+Result file contains all of regions marked as intact in the summary file.
+
+
 Usage: phaster-filter.py [-h] [-s SUMMARY] [-r REGIONS] [-o OUTPUT]
 
 Intact region filter from PHASTER.CA files
@@ -13,3 +20,4 @@ optional arguments:
                         'default=phage_regions.fna'
   -o OUTPUT, --output OUTPUT
                         Output file with results from regions intacts
+                       
